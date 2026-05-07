@@ -13129,22 +13129,38 @@ function renderNotes() {
   const ch = chapters[currentChapter];
   const container = document.getElementById('notesList');
 
-  if (!ch.notes || ch.notes.length === 0) {
+  const notes = ch.notes || [];
+  const diaries = ch.diary || [];
+  const allItems = [...notes, ...diaries];
+
+  if (allItems.length === 0) {
     container.innerHTML = `<div class="notes-empty">📓 這一課還沒有筆記<br><span style="font-size:12px;margin-top:8px;display:block;">上傳課堂筆記後即可加入</span></div>`;
     return;
   }
 
-  container.innerHTML = ch.notes.map((n, i) => `
-    <div class="note-block">
-      <div class="note-label">${n.label || '自由會話・筆記'}</div>
-      <div class="note-content" id="note-jp-${i}">${ruby(n.jp)}</div>
+  container.innerHTML = allItems.map((n, i) => {
+    const isDiary = n.type === 'diary';
+    const labelIcon = isDiary ? '📔' : '📓';
+    const label = n.label || (isDiary ? '日記' : '自由會話・筆記');
+    return `
+    <div class="note-block" style="${isDiary ? 'border-left: 3px solid var(--accent, #e07b54);' : ''}">
+      <div class="note-label">${label.startsWith('📔') || label.startsWith('📓') ? label : labelIcon + ' ' + label}</div>
+      <div class="note-content" id="note-jp-${i}">${ruby(n.jp || '')}</div>
       ${n.zh ? `<div class="note-zh" id="note-zh-${i}">${n.zh}</div>` : ''}
       <div class="note-controls">
-        <button class="btn btn-primary" onclick="speakNote(${i})">🔊 朗讀</button>
+        ${n.jp ? `<button class="btn btn-primary" onclick="speakNoteAll(${i})">🔊 朗讀</button>` : ''}
         ${n.zh ? `<button class="btn btn-outline" onclick="toggleNoteZH(${i},this)">🇹🇼 顯示翻譯</button>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function speakNoteAll(i) {
+  const ch = chapters[currentChapter];
+  const notes = ch.notes || [];
+  const diaries = ch.diary || [];
+  const allItems = [...notes, ...diaries];
+  if (allItems[i]) speak(allItems[i].jp, 'ja-JP');
 }
 
 function speakNote(i) {
